@@ -205,9 +205,27 @@ export const useGlobalStore = () => {
     // RESPONSE TO EVENTS INSIDE OUR COMPONENTS.
 
     // THIS FUNCTION PROCESSES CHANGING A LIST NAME
-    store.changeListName = function (id, newName) {
- 
+////////////////////New Code////////////////////
+    store.changeListName = async function (id, newName) {
+        try {
+            const response = await requestSender.updatePlaylist(id, { name: newName });
+            if (!response.data.success) return;
+
+            const pairsResponse = await requestSender.readPlaylistPairs();
+            if (!pairsResponse.data.success) return;
+
+            storeReducer({
+                type: GlobalStoreActionType.CHANGE_LIST_NAME,
+                payload: {
+                    idNamePairs: pairsResponse.data.idNamePairs,
+                    playlist: response.data.playlist
+                }
+            });
+        } catch (err) {
+            console.error("Error renaming playlist:", err);
+        }
     }
+////////////////////New Code////////////////////
 
     // THIS FUNCTION PROCESSES CLOSING THE CURRENTLY LOADED LIST
     store.closeCurrentList = function () {
@@ -278,9 +296,26 @@ export const useGlobalStore = () => {
         }
         getListToDelete(id);
     }
-    store.deleteMarkedList = function() {
-        store.hideModals();
+////////////////////New Code////////////////////
+    store.deleteMarkedList = async function () {
+        if (!store.listIdMarkedForDeletion) return
+
+        try {
+            const response = await requestSender.deletePlaylist(store.listIdMarkedForDeletion)
+            if (!response.data.success) return
+
+            const pairsResponse = await requestSender.readPlaylistPairs()
+            if (!pairsResponse.data.success) return
+
+            storeReducer({
+                type: GlobalStoreActionType.LOAD_ID_NAME_PAIRS,
+                payload: pairsResponse.data.idNamePairs
+            })
+        } catch (err) {
+            console.error("Error deleting playlist:", err)
+        }
     }
+////////////////////New Code////////////////////
     // THIS FUNCTION SHOWS THE MODAL FOR PROMPTING THE USER
     // TO SEE IF THEY REALLY WANT TO DELETE THE LIST
 

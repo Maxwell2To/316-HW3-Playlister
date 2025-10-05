@@ -1,3 +1,4 @@
+//const { updatePlaylist } = require('../../client/src/requests');
 const Playlist = require('../models/playlist-model')
 /*
     This is our back-end API. It provides all the data services
@@ -87,9 +88,49 @@ readPlaylistPairs = async (req, res) => {
     }).catch(err => console.log(err))
 }
 
+////////////////////New Code////////////////////
+    const updatePlaylist = async (req, res) => {
+        try {
+            const playlist = await Playlist.findById(req.params.id)
+            if (!playlist) {
+                return res.status(404).json({ success: false, error: "Playlist not found" })
+            }
+            if (req.body.name) {
+                playlist.name = req.body.name
+            }
+            if (req.body.songs) {
+                playlist.songs = req.body.songs
+            }
+            await playlist.save()
+            return res.status(200).json({ success: true, playlist })
+        } 
+        catch (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
+    }
+////////////////////New Code////////////////////
+
+////////////////////New Code////////////////////
+const deletePlaylist = async (req, res) => {
+    try {
+        const playlist = await Playlist.findByIdAndDelete(req.params.id)
+        if (!playlist) {
+            return res.status(404).json({ success: false, error: "Playlist not found" })
+        }
+        return res.status(200).json({ success: true, playlist })
+    } 
+    catch (err) {
+        return res.status(400).json({ success: false, error: err })
+    }
+}
+////////////////////New Code////////////////////
+
+
 module.exports = {
     createPlaylist,
     readAllPlaylists,
     readPlaylistPairs,
     readPlaylistById,
+    updatePlaylist,
+    deletePlaylist,
 }
