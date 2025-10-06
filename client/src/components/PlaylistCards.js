@@ -12,15 +12,35 @@ const PlaylistCards = () => {
     const { store } = useContext(GlobalStoreContext);
     store.history = useHistory();
 
+    /* Old useEffect
     useEffect(() => {
         store.loadIdNamePairs();
     }, []);
+    */
+
+    ////////New code////////
+    useEffect(() => {
+        async function loadPlaylists() {
+            await store.loadIdNamePairs();
+
+            const savedId = localStorage.getItem("currentPlaylistId");
+            if (savedId) {
+                store.setCurrentList(savedId);
+            }
+        }
+        loadPlaylists();
+    }, [store]);
+    ////////New code////////
+
+
+
 
     function handleCreateNewList() {
         store.createNewList();
     }
-    let listCard = "";
-    if (store) {
+    //let listCard = "";
+    let listCard = null;
+    if (store.idNamePairs && store.idNamePairs.length > 0) {
         listCard = store.idNamePairs.map((pair) => (
             <PlaylistCard
                 key={pair._id}
@@ -29,6 +49,14 @@ const PlaylistCards = () => {
             />
         ))
     }
+    else {
+        listCard = (
+            <p style={{ textAlign: "center", color: "#777", marginTop: "20px" }}>
+                No playlists yet.
+            </p>
+        );
+    }
+    
     let deleteListModal = "";
     if (store.isDeleteListModalOpen())
         deleteListModal = <DeleteListModal />;

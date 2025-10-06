@@ -229,6 +229,10 @@ export const useGlobalStore = () => {
 
     // THIS FUNCTION PROCESSES CLOSING THE CURRENTLY LOADED LIST
     store.closeCurrentList = function () {
+
+        //New code line
+        localStorage.removeItem("currentPlaylistId");
+
         storeReducer({
             type: GlobalStoreActionType.CLOSE_CURRENT_LIST,
             payload: {}
@@ -343,8 +347,11 @@ export const useGlobalStore = () => {
             let response = await requestSender.readPlaylistById(id);
             if (response.data.success) {
                 let playlist = response.data.playlist;
-
                 if (response.data.success) {
+                    
+                    //New code line
+                    localStorage.setItem("currentPlaylistId", playlist._id);
+
                     storeReducer({
                         type: GlobalStoreActionType.SET_CURRENT_LIST,
                         payload: playlist
@@ -360,30 +367,102 @@ export const useGlobalStore = () => {
         return store.currentList.songs.length;
     }
 
+////////////////////New Code////////////////////
     // THIS FUNCTION CREATES A NEW SONG IN THE CURRENT LIST
     // USING THE PROVIDED DATA AND PUTS THIS SONG AT INDEX
-    store.createSong = function(index, song) {
+    store.createSong = async function(index, song) {
+        if (!store.currentList) return;
 
+        try {
+            let newSongs = [...store.currentList.songs];
+            newSongs.splice(index, 0, song);
+
+            const response = await requestSender.updatePlaylist(store.currentList._id, { songs: newSongs });
+            if (response.data.success) {
+                storeReducer({
+                    type: GlobalStoreActionType.SET_CURRENT_LIST,
+                    payload: response.data.playlist
+                });
+            }
+        } 
+        catch (err) {
+            console.error("Error while creating song:", err);
+        }
     }
     // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST FROM
     // start TO end AND ADJUSTS ALL OTHER ITEMS ACCORDINGLY
     store.moveSong = function(start, end) {
+        if (!store.currentList) return;
 
+        const songs = store.currentList.songs;
+        const [movedSong] = songs.splice(start, 1);
+        songs.splice(end, 0, movedSong);
+
+        storeReducer({
+            type: GlobalStoreActionType.SET_CURRENT_LIST,
+            payload: store.currentList
+        });
+
+        requestSender.updatePlaylist(store.currentList._id, { songs: songs }).catch(err => {
+            console.error("Error while updating playlist:", err);
+        });
     }
     // THIS FUNCTION REMOVES THE SONG AT THE index LOCATION
     // FROM THE CURRENT LIST
-    store.removeSong = function(index) {
+    store.removeSong = async function(index) {
+        if (!store.currentList) return;
 
+        try {
+            let newSongs = [...store.currentList.songs];
+            newSongs.splice(index, 1);
+
+            const response = await requestSender.updatePlaylist(store.currentList._id, { songs: newSongs });
+            if (response.data.success) {
+                storeReducer({
+                    type: GlobalStoreActionType.SET_CURRENT_LIST,
+                    payload: response.data.playlist
+                });
+            }
+        } 
+        catch (err) {
+            console.error("Error while removing song:", err);
+        }
     }
     // THIS FUNCTION UPDATES THE TEXT IN THE ITEM AT index TO text
-    store.updateSong = function(index, songData) {
+    store.updateSong = async function(index, songData) {
+        if (!store.currentList) return;
 
+        try {
+            let newSongs = [...store.currentList.songs];
+            newSongs[index] = songData;
+
+            const response = await requestSender.updatePlaylist(store.currentList._id, { songs: newSongs });
+            if (response.data.success) {
+                storeReducer({
+                    type: GlobalStoreActionType.SET_CURRENT_LIST,
+                    payload: response.data.playlist
+                });
+            }
+        } 
+        catch (err) {
+            console.error("Error while updating song:", err);
+        }
     }
     // THIS ADDS A BRAND NEW SONG
     store.addNewSong = () => {
+        if (!store.currentList) return;
 
+        let index = store.getPlaylistSize();
+        let newSong = {
+            title: "Untitled",
+            artist: "Unknown",
+            year: "2025",
+            youTubeId: "dQw4w9WgXcQ"
+        };
+        store.addCreateSongTransaction(index, newSong.title, newSong.artist, newSong.youTubeId);
     }
-    
+////////////////////New Code////////////////////
+
     // THIS FUNCDTION ADDS A CreateSong_Transaction TO THE TRANSACTION STACK
     store.addCreateSongTransaction = (index, title, artist, youTubeId) => {
         // ADD A SONG ITEM AND ITS NUMBER

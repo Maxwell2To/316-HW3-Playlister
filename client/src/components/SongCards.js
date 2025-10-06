@@ -16,6 +16,19 @@ function SongCards() {
     if (store.isEditSongModalOpen()) {
         modalJSX = <EditSongModal />;
     }
+
+    //New code to protect against null
+    if (!store.currentList) {
+        return (
+            <div id="playlist-cards">
+                <p style={{ textAlign: "center", color: "#777", marginTop: "20px" }}>
+                    No playlist selected
+                </p>
+                {modalJSX}
+            </div>
+        );
+    }
+
     return (
         <div id="playlist-cards">
         {
