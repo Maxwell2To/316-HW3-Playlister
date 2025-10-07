@@ -16,5 +16,8 @@ router.get('/playlistpairs', PlaylistController.readPlaylistPairs)
 router.put('/playlist/:id', PlaylistController.updatePlaylist)
 router.delete('/playlist/:id', PlaylistController.deletePlaylist)
 
+//New Code for postman
+router.get('/playlistsStartingWith', PlaylistController.getPlaylistsStartingWith)
+router.get('/songs', PlaylistController.getAllSongsMatching)
 
 module.exports = router

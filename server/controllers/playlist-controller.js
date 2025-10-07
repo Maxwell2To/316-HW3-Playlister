@@ -125,6 +125,52 @@ const deletePlaylist = async (req, res) => {
 }
 ////////////////////New Code////////////////////
 
+////////////////////New Code////////////////////
+const getPlaylistsStartingWith = async (req, res) => {
+    try {
+        const prefix = req.query.startsWith
+        if (!prefix) {
+            return res.status(400).json({ success: false, error: "Missing 'startsWith' query parameter" })
+        }
+        const regex = new RegExp("^" + prefix, "i")
+        const playlists = await Playlist.find({ name: { $regex: regex } })
+        return res.status(200).json({ success: true, data: playlists })
+    } catch (err) {
+        return res.status(400).json({ success: false, error: err.message })
+    }
+}
+////////////////////New Code////////////////////
+
+////////////////////New Code////////////////////
+const getAllSongsMatching = async (req, res) => {
+    try {
+        const { title, artist, year } = req.query
+        const allPlaylists = await Playlist.find({})
+        let allSongs = allPlaylists.flatMap(pl => pl.songs)
+
+        let filtered = allSongs.filter(song => {
+            let match = true
+            if (title) match = match && song.title.toLowerCase().includes(title.toLowerCase())
+            if (artist) match = match && song.artist.toLowerCase().includes(artist.toLowerCase())
+            if (year) match = match && song.year.toString() === year.toString()
+            return match
+        })
+
+        const seen = new Set()
+        const uniqueSongs = filtered.filter(song => {
+            const key = `${song.title}|${song.artist}|${song.year}`
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+        })
+
+        return res.status(200).json({ success: true, data: uniqueSongs })
+    } 
+    catch (err) {
+        return res.status(400).json({ success: false, error: err.message })
+    }
+}
+////////////////////New Code////////////////////
 
 module.exports = {
     createPlaylist,
@@ -133,4 +179,6 @@ module.exports = {
     readPlaylistById,
     updatePlaylist,
     deletePlaylist,
+    getPlaylistsStartingWith,
+    getAllSongsMatching,
 }
